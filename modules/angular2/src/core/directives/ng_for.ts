@@ -13,17 +13,51 @@ import {isPresent, isBlank} from 'angular2/src/core/facade/lang';
  * each instantiated template inherits from the outer context with the given loop variable set
  * to the current item from the iterable.
  *
- * It is possible to alias the `index` to a local variable that will be set to the current loop
- * iteration in the template context, and also to alias the 'last' to a local variable that will
- * be set to a boolean indicating if the item is the last one in the iteration
+ * # Local Variables
+ *
+ * `NgFor` provides several exported values that can be aliased to local variables:
+ *
+ * * `index` will be set to the current loop iteration for each template context.
+ * * `last` will be set to a boolean value indicating whether the item is the last one in the
+ *   iteration.
+ * * `even` will be set to a boolean value indicating whether this item has an even index.
+ * * `odd` will be set to a boolean value indicating whether this item has an odd index.
+ *
+ * # Change Propagation
+ *
+ * There are two reasons why `NgFor` will need to update the DOM:
+ * * The contents of the iterator changes.
+ * * The iterator itself is replaced.
  *
  * When the contents of the iterator changes, `NgFor` makes the corresponding changes to the DOM:
  *
  * * When an item is added, a new instance of the template is added to the DOM.
  * * When an item is removed, its template instance is removed from the DOM.
  * * When items are reordered, their respective templates are reordered in the DOM.
+ * * Otherwise, items remain unchanged in the DOM.
  *
- * # Example
+ * If the iterator itself is replaced, the DOM will be thrown out and recreated from scratch
+ * with elements from the new iterator.
+ *
+ * This has important implications for animations and any stateful controls in the template (such
+ * as `<input>` elements which accept user input). If the iterator contents change, Angular will
+ * reproduce those changes in the DOM. New rows can be animated in, removed rows can be animated
+ * out, and unchanged rows retain any unsaved state such as user input.
+ *
+ * If the entire iterator is replaced, Angular will tear down the entire DOM and rebuild it with
+ * from the new iterator, even if none of the elements have changed. This is an expensive
+ * operation, and should be avoided if possible.
+ *
+ * # Syntax
+ *
+ * - `<li *ng-for="#item of items; #i = index">...</li>`
+ * - `<li template="ng-for #item of items; #i = index">...</li>`
+ * - `<template ng-for #item [ng-for-of]="items" #i="index"><li>...</li></template>`
+ *
+ * ### Example
+ *
+ * See a [live demo](http://plnkr.co/edit/KVuXxDp0qinGDyo307QW?p=preview) for a more detailed
+ * example.
  *
  * ```
  * <ul>
@@ -32,12 +66,6 @@ import {isPresent, isBlank} from 'angular2/src/core/facade/lang';
  *   </li>
  * </ul>
  * ```
- *
- * # Syntax
- *
- * - `<li *ng-for="#item of items; #i = index">...</li>`
- * - `<li template="ng-for #item of items; #i = index">...</li>`
- * - `<template ng-for #item [ng-for-of]="items" #i="index"><li>...</li></template>`
  */
 @Directive({selector: '[ng-for][ng-for-of]', inputs: ['ngForOf']})
 export class NgFor implements DoCheck {
